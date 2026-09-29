@@ -1,0 +1,36 @@
+# For LOCAL testing only. On Railway each folder is deployed as its own service.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppass
+      POSTGRES_DB: appdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [data-net]
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgres://appuser:apppass@db:5432/appdb
+      PORT: 3000
+    depends_on: [db]
+    networks: [data-net, app-net]
+
+  frontend:
+    build: ./frontend
+    environment:
+      PORT: 80
+      BACKEND_URL: http://backend:3000
+    ports:
+      - "8080:80"
+    depends_on: [backend]
+    networks: [app-net]
+
+networks:
+  app-net:
+  data-net:
+
+volumes:
+  pgdata:
